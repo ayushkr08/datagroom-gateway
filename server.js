@@ -66,7 +66,7 @@ try {
     httpServer = require('http').createServer(app);
     io = require('socket.io')(httpServer, { pingTimeout: 60000 });
     httpServer.listen(config.express.port);
-    console.log('http server listening on port : ', config.express.port);    
+    console.log('http server listening on port : ', config.express.port);
 }
 httpServer.timeout = 60 * 60 * 1000;
 
@@ -187,7 +187,7 @@ app.all('*', (req, res, next) => {
 });
 
 // Locks logic, move to separate file
-var locks = {}; 
+var locks = {};
 var clientLocks = {};
 function dgLock (lockReq, clientId) {
     if (!locks[lockReq.dsName]) {
@@ -240,7 +240,7 @@ function dgUnlock(unlockReq, clientId) {
             delete clientLocks[clientId];
             //console.log("Returning true in dgUnLock: 1");
             return {status: true}
-        } 
+        }
     } catch (e) { console.log("Exception in dgUnlock", unlockReq)}
 
     if (unlockReq.newVal) { // XXX: Should it have more stringent checks here?
@@ -255,7 +255,7 @@ function dgUnlockForClient (clientId) {
     try {
         if (clientLocks[clientId]) {
             let prevLockReq = clientLocks[clientId];
-            dgUnlock(prevLockReq, clientId);               
+            dgUnlock(prevLockReq, clientId);
             return {status: true, unlocked: prevLockReq}
         }
     } catch (e) {}
@@ -290,7 +290,7 @@ var isDbConnected = false;
             }
             let dsLocks = locks[lockReq.dsName];
             console.log('active locks after lockReq:', JSON.stringify(dsLocks));
-    
+
         });
         client.on('unlockReq', (unlockReq) => {
             console.log(`${Date()}: unlockReq: `, unlockReq);
@@ -445,8 +445,12 @@ dbAbstraction.hello();
 async function dbPing() {
     try{
         let db = new DbAbstraction();
-        isDbConnected = await db.isdbAvailable();
-        io.emit('dbConnectivityState', {dbState: isDbConnected});
+        let currentDbState = await db.isdbAvailable();
+        if (isDbConnected !== currentDbState) {
+            console.log(`Db connected state has changed from ${isDbConnected} to ${currentDbState}`);
+            isDbConnected = currentDbState;
+            io.emit('dbConnectivityState', { dbState: isDbConnected });
+        }
         await db.destroy();
     }  catch (e) {
         console.log("Exception caught in db not available: ", e);
