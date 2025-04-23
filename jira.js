@@ -78,6 +78,7 @@ async function refreshJiraQuery(dsName, jiraConfig) {
             await dbAbstraction.update(dsName, "data", r.selectorObj, r.fullRec);
         } catch (e) {
             console.log("Db update error refreshJiraQuery: ", e);
+            console.log("Db update error refresh JWT Query: ", e);
         }
     }
     await dbAbstraction.destroy();
